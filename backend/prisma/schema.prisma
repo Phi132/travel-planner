@@ -1,0 +1,490 @@
+// ============================================================
+// Travel Planner - Prisma Schema (GIAI ĐOẠN 2 - Đầy đủ)
+// Database: MySQL
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["fullTextIndex"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum TripStatus {
+  PREPARING // Chuẩn bị
+  ONGOING // Đang diễn ra
+  COMPLETED // Hoàn thành
+}
+
+enum ExpenseCategory {
+  FOOD // Ăn uống
+  HOTEL // Khách sạn
+  TRANSPORT // Di chuyển
+  SHOPPING // Mua sắm
+  TICKET // Vé tham quan
+  OTHER // Khác
+}
+
+enum FavoriteStatus {
+  WANT_TO_GO // Muốn đi
+  VISITED // Đã đi
+  LOVED // Yêu thích
+}
+
+enum NotificationType {
+  TRIP_REMINDER // Nhắc nhở chuyến đi
+  TRIP_STARTING // Chuyến đi sắp bắt đầu
+  BUDGET_WARNING // Cảnh báo ngân sách
+  MEMORY // Kỷ niệm (x năm trước)
+  SYSTEM // Hệ thống
+}
+
+enum Weather {
+  SUNNY // Nắng
+  CLOUDY // Nhiều mây
+  RAINY // Mưa
+  STORMY // Bão
+  COOL // Mát mẻ
+  HOT // Nóng
+  SNOWY // Tuyết
+}
+
+enum MediaType {
+  PHOTO
+  VIDEO
+}
+
+// ============================================================
+// NGƯỜI DÙNG & XÁC THỰC
+// ============================================================
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  password     String
+  fullName     String    @map("full_name")
+  avatarUrl    String?   @map("avatar_url")
+  phone        String?
+  role         UserRole  @default(USER)
+  bio          String?   @db.Text
+  dateOfBirth  DateTime? @map("date_of_birth")
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  refreshTokens RefreshToken[]
+  trips         Trip[]
+  journals      Journal[]
+  photos        Photo[]
+  expenses      Expense[]
+  favorites     Favorite[]
+  notifications Notification[]
+  placeNotes    PlaceUserNote[]
+
+  @@index([email])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  token     String    @unique @db.VarChar(512)
+  userAgent String?   @map("user_agent")
+  ipAddress String?   @map("ip_address")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("refresh_tokens")
+}
+
+// ============================================================
+// ĐỊA GIỚI HÀNH CHÍNH
+// ============================================================
+
+model Province {
+  id          String    @id @default(uuid())
+  name        String // Ví dụ: TP Hồ Chí Minh
+  slug        String    @unique
+  region      String? // Miền Bắc / Miền Trung / Miền Nam
+  description String?   @db.Text
+  imageUrl    String?   @map("image_url")
+  isFeatured  Boolean   @default(false) @map("is_featured")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  districts District[]
+  places    Place[]
+
+  @@index([slug])
+  @@index([deletedAt])
+  @@map("provinces")
+}
+
+model District {
+  id         String    @id @default(uuid())
+  provinceId String    @map("province_id")
+  name       String // Ví dụ: Quận 1
+  slug       String
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+
+  province Province @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+  places   Place[]
+
+  @@unique([provinceId, slug])
+  @@index([provinceId])
+  @@index([deletedAt])
+  @@map("districts")
+}
+
+// ============================================================
+// DANH MỤC & ĐỊA ĐIỂM
+// ============================================================
+
+model Category {
+  id        String    @id @default(uuid())
+  name      String    @unique // Cafe, Quán ăn, Nhà hàng, Địa điểm check-in...
+  slug      String    @unique
+  icon      String? // tên icon lucide-react
+  colorHex  String?   @map("color_hex")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  places Place[]
+
+  @@index([slug])
+  @@map("categories")
+}
+
+model Place {
+  id             String    @id @default(uuid())
+  name           String
+  slug           String
+  description    String?   @db.Text
+  address        String    @db.VarChar(500)
+  provinceId     String    @map("province_id")
+  districtId     String?   @map("district_id")
+  categoryId     String    @map("category_id")
+  latitude       Decimal   @db.Decimal(10, 7)
+  longitude      Decimal   @db.Decimal(10, 7)
+  googleMapsUrl  String?   @map("google_maps_url") @db.VarChar(500)
+  openHours      String?   @map("open_hours") // Ví dụ: "07:00 - 22:00"
+  ticketPrice    String?   @map("ticket_price") // Ví dụ: "Miễn phí" hoặc "40.000đ"
+  ratingAvg      Decimal   @default(0) @map("rating_avg") @db.Decimal(2, 1)
+  ratingCount    Int       @default(0) @map("rating_count")
+  isFeatured     Boolean   @default(false) @map("is_featured")
+  coverImageUrl  String?   @map("cover_image_url") @db.VarChar(500)
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  province  Province @relation(fields: [provinceId], references: [id])
+  district  District? @relation(fields: [districtId], references: [id])
+  category  Category @relation(fields: [categoryId], references: [id])
+
+  images      PlaceImage[]
+  favorites   Favorite[]
+  schedules   TripSchedule[]
+  photos      Photo[]
+  userNotes   PlaceUserNote[]
+  journalPlaces JournalPlace[]
+
+  @@unique([provinceId, slug])
+  @@index([provinceId])
+  @@index([districtId])
+  @@index([categoryId])
+  @@index([isFeatured])
+  @@index([deletedAt])
+  @@fulltext([name, description])
+  @@map("places")
+}
+
+model PlaceImage {
+  id        String   @id @default(uuid())
+  placeId   String   @map("place_id")
+  url       String   @db.VarChar(500)
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  place Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@index([placeId])
+  @@map("place_images")
+}
+
+// Ghi chú cá nhân của người dùng cho một địa điểm (khác với đánh giá công khai)
+model PlaceUserNote {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  placeId   String   @map("place_id")
+  note      String   @db.Text
+  rating    Int? // 1-5 sao, đánh giá cá nhân
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  place Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, placeId])
+  @@index([placeId])
+  @@map("place_user_notes")
+}
+
+// ============================================================
+// CHUYẾN ĐI & LỊCH TRÌNH
+// ============================================================
+
+model Trip {
+  id            String     @id @default(uuid())
+  userId        String     @map("user_id")
+  name          String
+  description   String?    @db.Text
+  startDate     DateTime   @map("start_date")
+  endDate       DateTime   @map("end_date")
+  companions    String?    @db.Text // Danh sách người đi cùng, lưu dạng JSON string
+  budget        Decimal?   @db.Decimal(14, 2)
+  transportation String?   // Ví dụ: Máy bay, Xe khách, Xe máy...
+  status        TripStatus @default(PREPARING)
+  coverImageUrl String?    @map("cover_image_url") @db.VarChar(500)
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+  deletedAt     DateTime?  @map("deleted_at")
+
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  days      TripDay[]
+  journals  Journal[]
+  photos    Photo[]
+  expenses  Expense[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([startDate, endDate])
+  @@index([deletedAt])
+  @@map("trips")
+}
+
+model TripDay {
+  id        String   @id @default(uuid())
+  tripId    String   @map("trip_id")
+  dayNumber Int      @map("day_number") // Ngày 1, Ngày 2...
+  date      DateTime
+  notes     String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  trip      Trip           @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  schedules TripSchedule[]
+  journals  Journal[]
+  photos    Photo[]
+
+  @@unique([tripId, dayNumber])
+  @@index([tripId])
+  @@map("trip_days")
+}
+
+model TripSchedule {
+  id                 String   @id @default(uuid())
+  tripDayId          String   @map("trip_day_id")
+  placeId            String?  @map("place_id")
+  title              String // Tên hoạt động, ví dụ "Ăn sáng"
+  startTime          String   @map("start_time") // "08:00"
+  endTime             String?  @map("end_time")
+  note               String?  @db.Text
+  travelTimeMinutes  Int?     @map("travel_time_minutes") // thời gian di chuyển tới điểm này
+  sortOrder          Int      @default(0) @map("sort_order")
+  isCompleted        Boolean  @default(false) @map("is_completed")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  tripDay TripDay @relation(fields: [tripDayId], references: [id], onDelete: Cascade)
+  place   Place?  @relation(fields: [placeId], references: [id])
+
+  @@index([tripDayId])
+  @@index([placeId])
+  @@index([sortOrder])
+  @@map("trip_schedules")
+}
+
+// ============================================================
+// NHẬT KÝ DU LỊCH
+// ============================================================
+
+model Journal {
+  id          String    @id @default(uuid())
+  tripId      String    @map("trip_id")
+  tripDayId   String?   @map("trip_day_id")
+  userId      String    @map("user_id")
+  date        DateTime
+  content     String?   @db.Text
+  mood        String? // Ví dụ: "Hạnh phúc", "Mệt nhưng vui"
+  weather     Weather?
+  rating      Int? // 1-5 sao cho ngày hôm đó
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  trip    Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  tripDay TripDay? @relation(fields: [tripDayId], references: [id])
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  photos JournalPhoto[]
+  places JournalPlace[]
+
+  @@index([tripId])
+  @@index([userId])
+  @@index([date])
+  @@index([deletedAt])
+  @@map("journals")
+}
+
+// Liên kết địa điểm đã ghé thăm trong nhật ký ngày hôm đó
+model JournalPlace {
+  id        String   @id @default(uuid())
+  journalId String   @map("journal_id")
+  placeId   String   @map("place_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  journal Journal @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  place   Place   @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@unique([journalId, placeId])
+  @@map("journal_places")
+}
+
+// ============================================================
+// ẢNH / VIDEO (ALBUM)
+// ============================================================
+
+model Photo {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  tripId    String?   @map("trip_id")
+  tripDayId String?   @map("trip_day_id")
+  placeId   String?   @map("place_id")
+  url       String    @db.VarChar(500)
+  thumbnailUrl String? @map("thumbnail_url") @db.VarChar(500)
+  type      MediaType @default(PHOTO)
+  caption   String?   @db.Text
+  takenAt   DateTime? @map("taken_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trip    Trip?    @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  tripDay TripDay? @relation(fields: [tripDayId], references: [id])
+  place   Place?   @relation(fields: [placeId], references: [id])
+
+  journalLinks JournalPhoto[]
+
+  @@index([userId])
+  @@index([tripId])
+  @@index([tripDayId])
+  @@index([deletedAt])
+  @@map("photos")
+}
+
+model JournalPhoto {
+  id        String   @id @default(uuid())
+  journalId String   @map("journal_id")
+  photoId   String   @map("photo_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  journal Journal @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  photo   Photo   @relation(fields: [photoId], references: [id], onDelete: Cascade)
+
+  @@unique([journalId, photoId])
+  @@map("journal_photos")
+}
+
+// ============================================================
+// CHI PHÍ
+// ============================================================
+
+model Expense {
+  id          String          @id @default(uuid())
+  tripId      String          @map("trip_id")
+  userId      String          @map("user_id")
+  category    ExpenseCategory
+  amount      Decimal         @db.Decimal(14, 2)
+  description String?
+  date        DateTime
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+  deletedAt   DateTime?       @map("deleted_at")
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tripId])
+  @@index([userId])
+  @@index([category])
+  @@index([date])
+  @@index([deletedAt])
+  @@map("expenses")
+}
+
+// ============================================================
+// YÊU THÍCH
+// ============================================================
+
+model Favorite {
+  id        String         @id @default(uuid())
+  userId    String         @map("user_id")
+  placeId   String         @map("place_id")
+  status    FavoriteStatus @default(WANT_TO_GO)
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  place Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, placeId])
+  @@index([userId])
+  @@index([placeId])
+  @@index([status])
+  @@map("favorites")
+}
+
+// ============================================================
+// THÔNG BÁO
+// ============================================================
+
+model Notification {
+  id        String            @id @default(uuid())
+  userId    String            @map("user_id")
+  type      NotificationType
+  title     String
+  content   String            @db.Text
+  linkUrl   String?           @map("link_url")
+  isRead    Boolean           @default(false) @map("is_read")
+  createdAt DateTime          @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
+}

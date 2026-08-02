@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+    <meta name="theme-color" content="#FF87BA" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="description" content="Travel Planner - Lập kế hoạch du lịch và lưu nhật ký du lịch dành cho người Việt" />
+    <script>
+      // Chặn đồng bộ (blocking) — chạy TRƯỚC khi trình duyệt vẽ khung hình đầu
+      // tiên, để gắn ngay class "dark" vào <html> nếu người dùng đang dùng
+      // dark mode. Nếu không có bước này, class "dark" chỉ được gắn sau khi
+      // React mount xong (trong useEffect), gây ra 1 khoảnh khắc nền trắng
+      // nháy lên trước khi đổi sang tối (FOUC), làm chữ trắng bị chìm.
+      (function () {
+        try {
+          var stored = localStorage.getItem('travel-planner-theme');
+          var theme = stored ? JSON.parse(stored)?.state?.theme : 'system';
+          var isDark = theme === 'dark' || (theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (isDark) document.documentElement.classList.add('dark');
+        } catch (e) {}
+      })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <title>Travel Planner - Lập kế hoạch du lịch của bạn</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

@@ -1,0 +1,116 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 340 25% 98%;
+    --foreground: 336 20% 16%;
+    --card: 0 0% 100%;
+    --card-foreground: 336 20% 16%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 336 20% 16%;
+    --muted: 340 25% 95%;
+    --muted-foreground: 330 10% 46%;
+    --border: 340 20% 91%;
+    --input: 340 20% 91%;
+    --ring: 335 90% 74%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --radius: 1rem;
+  }
+
+  .dark {
+    --background: 336 28% 8%;
+    --foreground: 320 20% 95%;
+    --card: 335 25% 11%;
+    --card-foreground: 320 20% 95%;
+    --popover: 335 25% 11%;
+    --popover-foreground: 320 20% 95%;
+    --muted: 335 20% 16%;
+    --muted-foreground: 320 12% 65%;
+    --border: 335 20% 19%;
+    --input: 335 20% 19%;
+    --ring: 335 90% 74%;
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --radius: 1rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior-y: none;
+    accent-color: theme('colors.primary.500');
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary/25 rounded-full;
+  }
+
+  /* Trình duyệt tự vẽ các phần này màu xanh mặc định (bôi chọn văn bản,
+     khung khi Chrome tự điền form, icon lịch/đồng hồ) — đổi lại cho khớp
+     tông hồng pastel của app thay vì để lộ màu xanh gốc của hệ thống. */
+  ::selection {
+    background-color: theme('colors.primary.200');
+    color: theme('colors.primary.800');
+  }
+
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: hsl(var(--foreground));
+    box-shadow: 0 0 0 1000px hsl(var(--card)) inset;
+    -webkit-box-shadow: 0 0 0 1000px hsl(var(--card)) inset;
+    transition: background-color 9999s ease-in-out 0s;
+  }
+
+  input[type='date']::-webkit-calendar-picker-indicator,
+  input[type='time']::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(48%) sepia(64%) saturate(1352%) hue-rotate(295deg) brightness(101%) contrast(101%);
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: hsl(var(--muted-foreground));
+  }
+
+  ::-moz-selection {
+    background-color: theme('colors.primary.200');
+    color: theme('colors.primary.800');
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/70 dark:bg-card/95 backdrop-blur-xl border border-white/40 dark:border-white/10;
+  }
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
