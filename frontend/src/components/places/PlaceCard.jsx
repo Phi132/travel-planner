@@ -3,9 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Star, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const FALLBACK_IMAGE =
-  'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect width="100%25" height="100%25" fill="%23e2e8f0"/%3E%3C/svg%3E';
+import { DEFAULT_PLACE_IMAGE } from '@/lib/imageDefaults';
 
 export const PlaceCard = forwardRef(function PlaceCard({ place }, ref) {
   return (
@@ -23,10 +21,13 @@ export const PlaceCard = forwardRef(function PlaceCard({ place }, ref) {
       >
         <div className="relative aspect-[4/3] overflow-hidden bg-muted">
           <img
-            src={place.coverImageUrl || FALLBACK_IMAGE}
+            src={place.coverImageUrl || DEFAULT_PLACE_IMAGE}
             alt={place.name}
             loading="lazy"
             className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+            onError={(e) => {
+              if (e.currentTarget.src !== DEFAULT_PLACE_IMAGE) e.currentTarget.src = DEFAULT_PLACE_IMAGE;
+            }}
           />
           {place.category && (
             <span className="absolute top-3 left-3 rounded-full bg-black/55 backdrop-blur-sm text-white text-xs font-semibold px-3 py-1">

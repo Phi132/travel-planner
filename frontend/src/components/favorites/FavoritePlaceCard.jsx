@@ -4,9 +4,9 @@ import { motion } from 'framer-motion';
 import { MapPin, Trash2 } from 'lucide-react';
 import { FAVORITE_STATUS_LABELS } from '@/components/favorites/FavoriteStatusBadge';
 import { Select } from '@/components/ui/Select';
+import { DEFAULT_PLACE_IMAGE } from '@/lib/imageDefaults';
 
-const FALLBACK_IMAGE =
-  'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect width="100%25" height="100%25" fill="%23e2e8f0"/%3E%3C/svg%3E';
+
 
 export const FavoritePlaceCard = forwardRef(function FavoritePlaceCard({ favorite, onStatusChange, onRemove, isUpdating }, ref) {
   const place = favorite.place;
@@ -24,9 +24,12 @@ export const FavoritePlaceCard = forwardRef(function FavoritePlaceCard({ favorit
     >
       <Link to={`/places/${place.id}`} className="shrink-0">
         <img
-          src={place.coverImageUrl || FALLBACK_IMAGE}
+          src={place.coverImageUrl || DEFAULT_PLACE_IMAGE}
           alt={place.name}
           className="h-24 w-24 sm:h-28 sm:w-28 rounded-2xl object-cover"
+          onError={(e) => {
+            if (e.currentTarget.src !== DEFAULT_PLACE_IMAGE) e.currentTarget.src = DEFAULT_PLACE_IMAGE;
+          }}
         />
       </Link>
 

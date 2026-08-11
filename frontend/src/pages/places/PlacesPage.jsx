@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PlaceCard } from '@/components/places/PlaceCard';
+import { PlaceMap } from '@/components/places/PlaceMap';
 import { PlaceFilters } from '@/components/places/PlaceFilters';
 import { PlaceCardSkeleton } from '@/components/skeletons/PlaceCardSkeleton';
 import { usePlaces, useProvinces, useCategories } from '@/hooks/usePlaces';
@@ -19,6 +20,7 @@ export default function PlacesPage() {
   const [searchInput, setSearchInput] = useState('');
   const [provinceSlug, setProvinceSlug] = useState(undefined);
   const [categorySlug, setCategorySlug] = useState(undefined);
+  const [selectedPlaceId, setSelectedPlaceId] = useState(null);
   const search = useDebouncedValue(searchInput, 400);
 
   const { data: provinces = [] } = useProvinces();
@@ -36,8 +38,12 @@ export default function PlacesPage() {
   const meta = data?.meta;
   const hasFilter = !!(search || provinceSlug || categorySlug);
 
+  // Khi đổi bộ lọc/trang, không giữ marker đã chọn nếu marker đó không còn trong danh sách.
+  const selectedPlace = places.find((place) => place.id === selectedPlaceId);
+
   function resetPage() {
     setPage(1);
+    setSelectedPlaceId(null);
   }
 
   return (
@@ -84,6 +90,12 @@ export default function PlacesPage() {
         </Card>
       ) : (
         <>
+          <PlaceMap
+            places={places}
+            selectedPlaceId={selectedPlace?.id}
+            onSelect={(place) => setSelectedPlaceId(place.id)}
+          />
+
           <div className={cn('grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 transition-opacity', isFetching && 'opacity-60')}>
             <AnimatePresence mode="popLayout">
               {places.map((place) => (
@@ -94,14 +106,14 @@ export default function PlacesPage() {
 
           {meta && meta.totalPages > 1 && (
             <div className="flex items-center justify-center gap-3 mt-6">
-              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => { setSelectedPlaceId(null); setPage((p) => p - 1); }}>
                 <ChevronLeft className="h-4 w-4" />
                 Trước
               </Button>
               <span className="text-sm text-muted-foreground font-medium">
                 Trang {meta.page} / {meta.totalPages}
               </span>
-              <Button variant="outline" size="sm" disabled={page >= meta.totalPages} onClick={() => setPage((p) => p + 1)}>
+              <Button variant="outline" size="sm" disabled={page >= meta.totalPages} onClick={() => { setSelectedPlaceId(null); setPage((p) => p + 1); }}>
                 Sau
                 <ChevronRight className="h-4 w-4" />
               </Button>

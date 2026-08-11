@@ -1,30 +1,48 @@
-import { useMemo, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useMemo, useState } from "react";
+import { useParams, Link } from "react-router-dom";
 import {
   DndContext,
   closestCenter,
   PointerSensor,
   TouchSensor,
   useSensor,
-  useSensors
-} from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
-import { ArrowLeft, Calendar, Wallet, Users, Plus, CalendarDays, Images, AlertCircle } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { TripStatusBadge } from '@/components/trips/TripStatusBadge';
-import { ScheduleItemCard } from '@/components/trips/schedule/ScheduleItemCard';
-import { ScheduleFormModal } from '@/components/trips/schedule/ScheduleFormModal';
-import { PhotoGrid } from '@/components/photos/PhotoGrid';
-import { PhotoLightbox } from '@/components/photos/PhotoLightbox';
-import { PhotoUploadButton } from '@/components/photos/PhotoUploadButton';
-import { useTrip } from '@/hooks/useTrips';
-import { useTripDays, useDeleteSchedule, useReorderSchedules } from '@/hooks/useSchedule';
-import { usePhotos, useUploadPhotos, useDeletePhoto } from '@/hooks/usePhotos';
-import { getApiErrorMessage } from '@/utils/getApiErrorMessage';
-import { formatCurrency, formatDate, cn } from '@/lib/utils';
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import {
+  ArrowLeft,
+  Calendar,
+  Wallet,
+  Users,
+  Plus,
+  CalendarDays,
+  Images,
+  AlertCircle,
+} from "lucide-react";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { TripStatusBadge } from "@/components/trips/TripStatusBadge";
+import { ScheduleItemCard } from "@/components/trips/schedule/ScheduleItemCard";
+import { ScheduleFormModal } from "@/components/trips/schedule/ScheduleFormModal";
+import { PhotoGrid } from "@/components/photos/PhotoGrid";
+import { PhotoLightbox } from "@/components/photos/PhotoLightbox";
+import { PhotoUploadButton } from "@/components/photos/PhotoUploadButton";
+import { useTrip } from "@/hooks/useTrips";
+import {
+  useTripDays,
+  useDeleteSchedule,
+  useReorderSchedules,
+} from "@/hooks/useSchedule";
+import { usePhotos, useUploadPhotos, useDeletePhoto } from "@/hooks/usePhotos";
+import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
+import { formatCurrency, formatDate, cn } from "@/lib/utils";
+import { DEFAULT_TRIP_IMAGE } from "@/lib/imageDefaults";
 
 function DaySkeleton() {
   return (
@@ -54,7 +72,7 @@ export default function TripDetailPage() {
   const { data: days, isLoading: isLoadingDays } = useTripDays(tripId);
 
   const [activeDayId, setActiveDayId] = useState(null);
-  const [activeTab, setActiveTab] = useState('schedule'); // 'schedule' | 'photos'
+  const [activeTab, setActiveTab] = useState("schedule"); // 'schedule' | 'photos'
   const [formOpen, setFormOpen] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState(null);
   const [deletingSchedule, setDeletingSchedule] = useState(null);
@@ -66,7 +84,9 @@ export default function TripDetailPage() {
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 8 } })
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 150, tolerance: 8 },
+    })
   );
 
   const activeDay = useMemo(() => {
@@ -90,7 +110,7 @@ export default function TripDetailPage() {
       onSuccess: () => {
         setDeletingPhoto(null);
         setLightboxIndex(null);
-      }
+      },
     });
   }
 
@@ -120,9 +140,15 @@ export default function TripDetailPage() {
     if (oldIndex === -1 || newIndex === -1) return;
 
     const reordered = arrayMove(activeDay.schedules, oldIndex, newIndex);
-    const optimisticDays = days.map((d) => (d.id === activeDay.id ? { ...d, schedules: reordered } : d));
+    const optimisticDays = days.map((d) =>
+      d.id === activeDay.id ? { ...d, schedules: reordered } : d
+    );
 
-    const items = reordered.map((s, index) => ({ id: s.id, tripDayId: activeDay.id, sortOrder: index }));
+    const items = reordered.map((s, index) => ({
+      id: s.id,
+      tripDayId: activeDay.id,
+      sortOrder: index,
+    }));
     reorderMutation.mutate({ tripId, items, optimisticDays });
   }
 
@@ -150,47 +176,70 @@ export default function TripDetailPage() {
     <div>
       <BackLink />
 
-      <div className="rounded-3xl overflow-hidden bg-gradient-to-br from-primary/15 via-secondary/10 to-accent/10 p-6 mb-6 relative">
-        <TripStatusBadge status={trip.status} className="absolute top-5 right-5 shadow-soft" />
-        <h1 className="text-2xl font-bold tracking-tight mb-3 pr-24">{trip.name}</h1>
+      <div className="relative mb-6 overflow-hidden rounded-3xl border border-border bg-card shadow-soft">
+        <div className="h-52 sm:h-64">
+          <img
+            src={trip.coverImageUrl || DEFAULT_TRIP_IMAGE}
+            alt={trip.name}
+            className="h-full w-full object-cover"
+            onError={(e) => {
+              if (e.currentTarget.src !== DEFAULT_TRIP_IMAGE)
+                e.currentTarget.src = DEFAULT_TRIP_IMAGE;
+            }}
+          />
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+        <TripStatusBadge
+          status={trip.status}
+          className="absolute top-5 right-5 shadow-soft"
+        />
+        <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6 text-white">
+          <h1 className="text-2xl font-bold tracking-tight mb-3 pr-24">
+            {trip.name}
+          </h1>
 
-        <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
-          <span className="flex items-center gap-1.5">
-            <Calendar className="h-4 w-4" />
-            {formatDate(trip.startDate)} – {formatDate(trip.endDate)}
-          </span>
-          {trip.budget !== null && trip.budget !== undefined && (
+          <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-white/80">
             <span className="flex items-center gap-1.5">
-              <Wallet className="h-4 w-4" />
-              {formatCurrency(trip.budget)}
+              <Calendar className="h-4 w-4" />
+              {formatDate(trip.startDate)} – {formatDate(trip.endDate)}
             </span>
-          )}
-          {trip.companions?.length > 0 && (
-            <span className="flex items-center gap-1.5">
-              <Users className="h-4 w-4" />
-              {trip.companions.join(', ')}
-            </span>
-          )}
+            {trip.budget !== null && trip.budget !== undefined && (
+              <span className="flex items-center gap-1.5">
+                <Wallet className="h-4 w-4" />
+                {formatCurrency(trip.budget)}
+              </span>
+            )}
+            {trip.companions?.length > 0 && (
+              <span className="flex items-center gap-1.5">
+                <Users className="h-4 w-4" />
+                {trip.companions.join(", ")}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
       <div className="flex items-center justify-between mb-4 gap-3">
         <div className="flex rounded-2xl bg-muted p-1">
           <button
-            onClick={() => setActiveTab('schedule')}
+            onClick={() => setActiveTab("schedule")}
             className={cn(
-              'flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold transition-colors',
-              activeTab === 'schedule' ? 'bg-card shadow-soft text-foreground' : 'text-muted-foreground'
+              "flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold transition-colors",
+              activeTab === "schedule"
+                ? "bg-card shadow-soft text-foreground"
+                : "text-muted-foreground"
             )}
           >
             <CalendarDays className="h-4 w-4" />
             Lịch trình
           </button>
           <button
-            onClick={() => setActiveTab('photos')}
+            onClick={() => setActiveTab("photos")}
             className={cn(
-              'flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold transition-colors',
-              activeTab === 'photos' ? 'bg-card shadow-soft text-foreground' : 'text-muted-foreground'
+              "flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold transition-colors",
+              activeTab === "photos"
+                ? "bg-card shadow-soft text-foreground"
+                : "text-muted-foreground"
             )}
           >
             <Images className="h-4 w-4" />
@@ -198,21 +247,27 @@ export default function TripDetailPage() {
           </button>
         </div>
 
-        {activeDay && activeTab === 'schedule' && (
+        {activeDay && activeTab === "schedule" && (
           <Button size="sm" onClick={openCreateModal}>
             <Plus className="h-4 w-4" />
             Thêm hoạt động
           </Button>
         )}
-        {activeDay && activeTab === 'photos' && (
-          <PhotoUploadButton onUpload={handleUploadPhotos} isUploading={uploadPhotosMutation.isPending} />
+        {activeDay && activeTab === "photos" && (
+          <PhotoUploadButton
+            onUpload={handleUploadPhotos}
+            isUploading={uploadPhotosMutation.isPending}
+          />
         )}
       </div>
 
-      {activeTab === 'photos' && uploadPhotosMutation.isError && (
+      {activeTab === "photos" && uploadPhotosMutation.isError && (
         <div className="flex items-start gap-2 rounded-2xl bg-destructive/10 text-destructive px-4 py-3 mb-4 text-sm font-medium">
           <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
-          {getApiErrorMessage(uploadPhotosMutation.error, 'Tải ảnh lên thất bại.')}
+          {getApiErrorMessage(
+            uploadPhotosMutation.error,
+            "Tải ảnh lên thất bại."
+          )}
         </div>
       )}
 
@@ -234,17 +289,19 @@ export default function TripDetailPage() {
                 key={day.id}
                 onClick={() => setActiveDayId(day.id)}
                 className={cn(
-                  'shrink-0 rounded-2xl px-4 py-2.5 text-sm font-semibold transition-colors text-left',
+                  "shrink-0 rounded-2xl px-4 py-2.5 text-sm font-semibold transition-colors text-left",
                   activeDay?.id === day.id
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-card border border-border text-muted-foreground hover:bg-muted'
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card border border-border text-muted-foreground hover:bg-muted"
                 )}
               >
                 <div>Ngày {day.dayNumber}</div>
                 <div
                   className={cn(
-                    'text-[11px] font-normal',
-                    activeDay?.id === day.id ? 'text-primary-foreground/80' : 'text-muted-foreground'
+                    "text-[11px] font-normal",
+                    activeDay?.id === day.id
+                      ? "text-primary-foreground/80"
+                      : "text-muted-foreground"
                   )}
                 >
                   {formatDate(day.date)}
@@ -253,7 +310,7 @@ export default function TripDetailPage() {
             ))}
           </div>
 
-          {activeTab === 'schedule' ? (
+          {activeTab === "schedule" ? (
             activeDay && activeDay.schedules.length === 0 ? (
               <Card>
                 <EmptyState
@@ -270,11 +327,23 @@ export default function TripDetailPage() {
               </Card>
             ) : (
               activeDay && (
-                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                  <SortableContext items={activeDay.schedules.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={activeDay.schedules.map((s) => s.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
                     <div className="space-y-3">
                       {activeDay.schedules.map((schedule) => (
-                        <ScheduleItemCard key={schedule.id} schedule={schedule} onEdit={openEditModal} onDelete={setDeletingSchedule} />
+                        <ScheduleItemCard
+                          key={schedule.id}
+                          schedule={schedule}
+                          onEdit={openEditModal}
+                          onDelete={setDeletingSchedule}
+                        />
                       ))}
                     </div>
                   </SortableContext>
@@ -284,7 +353,10 @@ export default function TripDetailPage() {
           ) : isLoadingPhotos ? (
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="aspect-square rounded-xl bg-muted animate-pulse" />
+                <div
+                  key={i}
+                  className="aspect-square rounded-xl bg-muted animate-pulse"
+                />
               ))}
             </div>
           ) : photos.length === 0 ? (
@@ -294,7 +366,10 @@ export default function TripDetailPage() {
                 title="Chưa có ảnh nào"
                 description="Thêm ảnh cho ngày này để lưu lại kỷ niệm."
                 action={
-                  <PhotoUploadButton onUpload={handleUploadPhotos} isUploading={uploadPhotosMutation.isPending} />
+                  <PhotoUploadButton
+                    onUpload={handleUploadPhotos}
+                    isUploading={uploadPhotosMutation.isPending}
+                  />
                 }
               />
             </Card>
@@ -305,7 +380,13 @@ export default function TripDetailPage() {
       )}
 
       {activeDay && (
-        <ScheduleFormModal open={formOpen} onOpenChange={setFormOpen} tripId={tripId} tripDayId={activeDay.id} schedule={editingSchedule} />
+        <ScheduleFormModal
+          open={formOpen}
+          onOpenChange={setFormOpen}
+          tripId={tripId}
+          tripDayId={activeDay.id}
+          schedule={editingSchedule}
+        />
       )}
 
       <PhotoLightbox

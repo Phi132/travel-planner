@@ -1,11 +1,12 @@
 import { forwardRef } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Calendar, Wallet, Users, Pencil, Trash2, MapPin, CalendarDays } from 'lucide-react';
+import { Calendar, Wallet, Users, Pencil, Trash2, CalendarDays } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { TripStatusBadge } from '@/components/trips/TripStatusBadge';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { DEFAULT_TRIP_IMAGE } from '@/lib/imageDefaults';
 
 // forwardRef bắt buộc vì AnimatePresence mode="popLayout" (ở TripsListPage)
 // cần gắn ref trực tiếp lên component con để đo layout lúc phát sinh hiệu
@@ -21,13 +22,15 @@ export const TripCard = forwardRef(function TripCard({ trip, onEdit, onDelete },
       transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
     >
       <Card className="overflow-hidden h-full flex flex-col">
-        <Link to={`/trips/${trip.id}`} className="h-32 bg-gradient-to-br from-primary/15 via-secondary/10 to-accent/10 relative flex items-center justify-center">
-          {trip.coverImageUrl ? (
-            // eslint-disable-next-line jsx-a11y/img-redundant-alt
-            <img src={trip.coverImageUrl} alt={trip.name} className="h-full w-full object-cover" />
-          ) : (
-            <MapPin className="h-8 w-8 text-primary/40" strokeWidth={1.5} />
-          )}
+        <Link to={`/trips/${trip.id}`} className="group h-40 bg-gradient-to-br from-primary/15 via-secondary/10 to-accent/10 relative flex items-center justify-center overflow-hidden">
+          <img
+            src={trip.coverImageUrl || DEFAULT_TRIP_IMAGE}
+            alt={trip.name}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            onError={(e) => {
+              if (e.currentTarget.src !== DEFAULT_TRIP_IMAGE) e.currentTarget.src = DEFAULT_TRIP_IMAGE;
+            }}
+          />
           <TripStatusBadge status={trip.status} className="absolute top-3 right-3 shadow-soft" />
         </Link>
 

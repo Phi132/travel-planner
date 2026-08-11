@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { usePlace } from '@/hooks/usePlaces';
 import { useSetFavorite, useRemoveFavorite } from '@/hooks/useFavorites';
 import { cn } from '@/lib/utils';
+import { DEFAULT_PLACE_IMAGE } from '@/lib/imageDefaults';
 
 function DetailSkeleton() {
   return (
@@ -83,14 +84,22 @@ export default function PlaceDetailPage() {
   }
 
   const gallery = [place.coverImageUrl, ...(place.images ?? [])].filter(Boolean);
+  const displayGallery = gallery.length > 0 ? gallery : [DEFAULT_PLACE_IMAGE];
 
   return (
     <div>
       <BackLink />
 
       <div className="rounded-3xl overflow-hidden bg-muted aspect-[16/9] mb-3 relative">
-        {gallery.length > 0 ? (
-          <img src={gallery[activeImage]} alt={place.name} className="h-full w-full object-cover" />
+        {displayGallery.length > 0 ? (
+          <img
+            src={displayGallery[activeImage] || DEFAULT_PLACE_IMAGE}
+            alt={place.name}
+            className="h-full w-full object-cover"
+            onError={(e) => {
+              if (e.currentTarget.src !== DEFAULT_PLACE_IMAGE) e.currentTarget.src = DEFAULT_PLACE_IMAGE;
+            }}
+          />
         ) : (
           <div className="h-full w-full flex items-center justify-center text-muted-foreground">
             <ImageOff className="h-10 w-10" />

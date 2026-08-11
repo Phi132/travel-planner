@@ -111,6 +111,31 @@ async function main() {
     hnDistricts[d] = district;
   }
 
+
+const PLACE_IMAGE_URLS = {
+  'Nhà thờ Đức Bà Sài Gòn': 'https://images.unsplash.com/photo-1523731407965-2430cd12f5e4?auto=format&fit=crop&w=1200&q=85',
+  'Chợ Bến Thành': 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1200&q=85',
+  'Dinh Độc Lập': 'https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1200&q=85',
+  'Phố đi bộ Nguyễn Huệ': 'https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&w=1200&q=85',
+  'Bưu điện Trung tâm Sài Gòn': 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1200&q=85',
+  'The Coffee House Signature - Nguyễn Huệ': 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=85',
+  'Bánh mì Huỳnh Hoa': 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=1200&q=85',
+  'Landmark 81 SkyView': 'https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1200&q=85',
+  'Bảo tàng Chứng tích Chiến tranh': 'https://images.unsplash.com/photo-1564399579883-451a5d44ec08?auto=format&fit=crop&w=1200&q=85',
+  'Chợ Lớn (Chợ Bình Tây)': 'https://images.unsplash.com/photo-1523731407965-2430cd12f5e4?auto=format&fit=crop&w=1200&q=85',
+  'Hồ Gươm': 'https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1200&q=85',
+  'Phố cổ Hà Nội': 'https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&w=1200&q=85',
+  'Lăng Chủ tịch Hồ Chí Minh': 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=85',
+  'Cầu Rồng': 'https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&w=1200&q=85',
+  'Bãi biển Mỹ Khê': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=85',
+  'Chợ Đà Lạt': 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1200&q=85',
+  'Quảng trường Lâm Viên': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=85',
+  'Vinpearl Land Nha Trang': 'https://images.unsplash.com/photo-1530789253388-582c481c54b0?auto=format&fit=crop&w=1200&q=85',
+  'Phố cổ Hội An': 'https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1200&q=85',
+  'Bãi Sao': 'https://images.unsplash.com/photo-1493552152660-f915ab47ae9d?auto=format&fit=crop&w=1200&q=85',
+  'Đại Nội Huế': 'https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1200&q=85'
+};
+
   const placeDefs = [
     { name: 'Nhà thờ Đức Bà Sài Gòn', province: 'TP Hồ Chí Minh', district: 'Quận 1', category: 'Địa điểm nổi bật', address: '01 Công xã Paris, Bến Nghé, Quận 1, TP.HCM', lat: 10.7797, lng: 106.699, openHours: '08:00 - 17:00', ticketPrice: 'Miễn phí', description: 'Nhà thờ Chính tòa Đức Bà Sài Gòn là công trình kiến trúc Pháp cổ kính giữa lòng thành phố, biểu tượng lâu đời của Sài Gòn.', ratingAvg: 4.6, ratingCount: 2130, isFeatured: true },
     { name: 'Chợ Bến Thành', province: 'TP Hồ Chí Minh', district: 'Quận 1', category: 'Chợ', address: 'Lê Lợi, Bến Thành, Quận 1, TP.HCM', lat: 10.7724, lng: 106.6982, openHours: '06:00 - 24:00', ticketPrice: 'Miễn phí vào cửa', description: 'Khu chợ truyền thống nổi tiếng nhất Sài Gòn, nơi mua sắm đặc sản, quà lưu niệm và thưởng thức ẩm thực đường phố.', ratingAvg: 4.3, ratingCount: 5210, isFeatured: true },
@@ -139,7 +164,9 @@ async function main() {
   for (const p of placeDefs) {
     const place = await prisma.place.upsert({
       where: { provinceId_slug: { provinceId: provinces[p.province].id, slug: slugify(p.name) } },
-      update: {},
+      update: {
+        coverImageUrl: PLACE_IMAGE_URLS[p.name] ?? null
+      },
       create: {
         name: p.name,
         slug: slugify(p.name),
@@ -155,10 +182,22 @@ async function main() {
         ticketPrice: p.ticketPrice,
         ratingAvg: p.ratingAvg,
         ratingCount: p.ratingCount,
-        isFeatured: p.isFeatured
+        isFeatured: p.isFeatured,
+        coverImageUrl: PLACE_IMAGE_URLS[p.name] ?? null
       }
     });
     createdPlaces[p.name] = place;
+
+    if (PLACE_IMAGE_URLS[p.name]) {
+      const existingImage = await prisma.placeImage.findFirst({
+        where: { placeId: place.id, url: PLACE_IMAGE_URLS[p.name] }
+      });
+      if (!existingImage) {
+        await prisma.placeImage.create({
+          data: { placeId: place.id, url: PLACE_IMAGE_URLS[p.name], sortOrder: 0 }
+        });
+      }
+    }
   }
 
   const trip = await prisma.trip.create({
@@ -172,6 +211,7 @@ async function main() {
       budget: 5000000,
       transportation: 'Máy bay',
       status: 'PREPARING',
+      coverImageUrl: 'https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1400&q=85',
       days: {
         create: [
           { dayNumber: 1, date: new Date('2026-08-10') },

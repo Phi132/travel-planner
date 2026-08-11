@@ -123,3 +123,14 @@ npm run preview
 ## Deploy (sẽ hoàn thiện ở Giai đoạn 9)
 
 Hướng dẫn deploy chi tiết (VPS + Nginx + PM2 hoặc Docker) sẽ được bổ sung khi backend & frontend hoàn chỉnh.
+
+
+## Map
+
+Bản đồ sử dụng **React-Leaflet + Leaflet + OpenStreetMap**, không cần Google Maps API key.
+
+- Dữ liệu marker lấy trực tiếp từ `Place.latitude` / `Place.longitude`.
+- Tile map dùng OpenStreetMap và có attribution bắt buộc.
+- Không cần thay đổi Prisma schema hoặc backend API cho chức năng map hiện tại.
+- Khi cài dependency ở frontend, chạy:
+  `npm install leaflet react-leaflet`

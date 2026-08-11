@@ -38,7 +38,11 @@ function serializePlace(place) {
 const PLACE_INCLUDE = {
   province: { select: { id: true, name: true, slug: true } },
   district: { select: { id: true, name: true, slug: true } },
-  category: { select: { id: true, name: true, slug: true, icon: true } }
+  category: { select: { id: true, name: true, slug: true, icon: true } },
+  images: {
+    orderBy: { sortOrder: 'asc' },
+    select: { id: true, url: true, sortOrder: true }
+  }
 };
 
 async function resolveSlugFilters({ provinceSlug, districtSlug, categorySlug }) {
